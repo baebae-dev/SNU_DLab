@@ -10,7 +10,7 @@
 | Data Crawler | 데이터 추가수집 | [MIND] https://github.com/msnews/MIND |
 
 
-'''
+,,,
 해당 프로젝트를 하며 배운점
 
-'''
+,,,
