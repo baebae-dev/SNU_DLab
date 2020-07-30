@@ -10,6 +10,14 @@
 |------|---------|------------------|
 | Data Crawler | 데이터 추가수집 | [MIND] https://github.com/msnews/MIND |
 
+### Scrapy Crawler 
+ |_ Crawler
+   |_ MIND
+     |_ crawler
+       |_ msn
+         |_ pipeline (데이터 저장 방식 지정 파일)
+
+
 
 ```
 * 해당 프로젝트를 하며 배운점
