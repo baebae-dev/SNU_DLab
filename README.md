@@ -4,7 +4,7 @@
 
 <br>
 
-### Task 1. MIND
+### Task 1. MIND News Recommendation
 
 | Task |  부연설명 |  참조 사이트 및 자료 |
 |------|---------|------------------|
