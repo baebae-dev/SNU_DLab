@@ -25,6 +25,8 @@
 - os.environ([사용자 지정 PATH]) 지정? 
    : export 사용자 지정 PATH=해당 데이터 
 - Scrapy 사용법 (crawler 레포 참조)
+- zsh: no matches found: 에러 발생시 
+   : unsetopt nomatch 코드 실행 
 
 ```
 
