@@ -9,7 +9,7 @@
 | Task |  부연설명 |  참조 사이트 및 자료 |
 |------|---------|------------------|
 | Data Crawler | 데이터 추가수집 | [MIND] https://github.com/msnews/MIND |
-| Data Crawler | 크롤러 생성 | [msn_crawler]/SNU_Dlab/msn |
+| Data Crawler | 크롤러 생성 | [msn_crawler](SNU_Dlab/msn) |
 
 ```
 * How To Use *
