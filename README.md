@@ -13,7 +13,16 @@
 
 ```
 * How To Use *
+1. msn_large(SNU_Dlab/msn_large)
+   : for large data set train & test
+   <run code>
+   scrapy crawl msn_large -o 저장할 파일명 -t 저장포멧
 
+
+2. msn(SNU_Dlab/msn)
+   : for small data set train & test
+   <run code>
+   scrapy crawl msn -o 저장할 파일명 -t 저장포멧
 
 ```
 

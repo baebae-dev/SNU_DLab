@@ -6,13 +6,11 @@
 import scrapy
 
 
-class MsnItem(scrapy.Item):
+class MsnLargeItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-
     dates = scrapy.Field()
     titles = scrapy.Field()
+    abstracts = scrapy.Field()
     contents = scrapy.Field()
     images = scrapy.Field()
-
-    
