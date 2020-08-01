@@ -32,13 +32,13 @@
 
 4. BeautifulSoup crawling
    4-1. msn_BS 
-         |_msn_date_image.py (multiprocessing file)
+         |_msn_train.py 
             <run code>
-            python3 msn_date_image.py --data=train or test
+            python3 msn_train.py
    4-2.  msn_BS 
-         |_msn.py 
+         |_msn_dev.py 
             <run code>
-            python3 msn.py --data=train or test --save_format=csv or json
+            python3 msn_dev.py 
 ```
 
 
