@@ -6,7 +6,7 @@
 
 ### Task 1. MIND News Recommendation
 
-| Task |  부연설명 |  참조 사이트 및 자료 |
+| Task |  부연설명 | 파일  |
 |------|---------|------------------|
 | Data Crawler | 크롤러 생성 | [msn_crawler](SNU_Dlab/msn) |
 
