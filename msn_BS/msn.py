@@ -5,68 +5,113 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from multiprocessing import Pool
-import argparse
 import json
 import re
 import sys
 
-parser = argparse.ArgumentParser(description='Process some integers.')
-parser.add_argument('data', type=str, help='no data')
-parser.add_argument('save_format', type=str, help='')
-args = parser.parse_args()
 
-verts = []
-subverts = []
+url_lst = []
 nids = []
 titles = []    
 dates = []
 contents = []
 images = []
 
-newspaper = pd.read_csv('/Users/baeyuna/Documents/SNU_Dlab/Data/MINDlarge_{}/news.tsv'.format(args.data), delimiter='\t', header=None)
-urls = newspaper.iloc[:,5]
+newspaper = pd.read_csv('/Users/baeyuna/Documents/SNU_Dlab/Data/MINDlarge_train/news.tsv', delimiter='\t', header=None)
+urls = newspaper.iloc[:2000,5]
 
+print('crawling start.')
+url_except =[]
+num = 0
+total = len(urls)
 for url in urls:
+    # 진행상황 확인 
+    num += 1
+    if num % 1000 == 0:
+        print('{} urls are crawled.\n {} are remained'.format(num, total - num))
+
     req = requests.get(url)
     html = req.text
     soup = BeautifulSoup(html, 'html.parser')
 
-    # vert
-    if 'refurl' not in url:
-        url = url.split("/")[4:] 
-    else:
-        url = url.split("/")[5:]
-    verts.append(url[:2][0])
-    # subvert
-    subverts.append(url[:2][1])
-    # nid
-    nid = url[-1]
-    nids.append(nid.split('?')[0].split('-')[-1])
+    # url
+    url_lst.append(url)
+
     # title
-    title = soup.find('header').text.strip()
-    titles.append(title)
+    if soup.find('h1').text.strip() is not None:
+        title = soup.find('h1').text.strip()
+        titles.append(title)
+    elif soup.find('header').text.strip() is not None:
+        title = soup.find('header').text.strip()
+        titles.append(title)
+    else:
+        titles.append(None)
+
+    # try:
+    #     title = soup.find('header').text.strip()
+    #     titles.append(title)
+    # except:
+    #     title = soup.find('h1').text.strip()
+    #     titles.append(title)
+    # else:
+    #     titles.append(None)
+
     # date
-    date = soup.find('time').get('datetime')
-    dates.append(date)
+    try:
+        date = soup.find('time').get('datetime')
+        dates.append(date)
+    except:
+        dates.append(url)
+
     # content
-    content = soup.find('h2').text.strip()
-    contents.append(content)
+    if soup.find_all('p') is not None:
+        content = []
+        for el in soup.find_all('p'):
+            content.append(el.get_text()) 
+        contents.append(' '.join(content))
+    elif soup.find('h2').text.strip() is not None:
+        content = soup.find('h2').text.strip()
+        contents.append(content)
+    else:
+        contents.append(url)
+
+    # try:
+    #     content = soup.find('h2').text.strip()
+    #     contents.append(content)
+    # except:
+    #     content = []
+    #     for el in soup.find_all('p'):
+    #         content.append(el.get_text()) 
+    #     contents.append(' '.join(content))
+    # else:
+    #     contents.append(url)
+
     # image
-    image = soup.find('img').get('src')
-    images.append(image)
+    try:
+        image = soup.find('img').get('src')
+        images.append(image)
+    except:
+        images.append('no image')
+
+    # nid
+    nid = url.split('/')[-1].split('.')[0]
+    nids.append(nid)
 
 
-df = pd.DataFrame({'verts':verts,
-                   'subverts': subverts,
+df = pd.DataFrame({'url' : url_lst,
                    'nids': nids,
                    'Title':titles,
                    'Date': dates, 
                    'Content': contents,
                    'Image': images})
 
-# 데이터 저장
-if args.save_format == 'csv' :
-    df = df.to_csv('msn_{}.csv'.format(args.data), index=False)
-elif args.save_format == 'json' :
-    with open('msn_{}.json'.format(args.data), 'w') as f:
-        json.dump(df, f)
+# 데이터 저장   
+print('-------df--------')
+print(df.shape)
+df.to_csv('msn_train.csv', index=False)
+
+# if args.save_format == 'csv' :
+#     df.to_csv('msn_{}.csv'.format(args.data), index=False)
+# elif args.save_format == 'json' :
+#     with open('msn_{}.json'.format(args.data), 'w') as f:
+#         json.dump(df, f) 

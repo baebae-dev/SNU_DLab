@@ -11,4 +11,4 @@ class MsnSpider(scrapy.Spider):
         
 
 
-           
+        yield    
