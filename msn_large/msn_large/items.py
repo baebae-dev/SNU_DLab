@@ -11,6 +11,5 @@ class MsnLargeItem(scrapy.Item):
     # name = scrapy.Field()
     dates = scrapy.Field()
     titles = scrapy.Field()
-    abstracts = scrapy.Field()
     contents = scrapy.Field()
     images = scrapy.Field()
