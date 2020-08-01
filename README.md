@@ -24,6 +24,12 @@
    <run code>
    scrapy crawl msn -o 저장할 파일명 -t 저장포멧
 
+3. all using crawler(SNU_Dlab/Crawler)
+   : for large. small data train & test
+    estract features ['vert', 'subvert', 'nid', 'content', 'title', 'date;, 'image url']
+    <run code>
+    scrapy crawl msn -o 저장할 파일명 -t 저장포멧
+
 ```
 
 
