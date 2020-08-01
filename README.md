@@ -30,6 +30,15 @@
     <run code>
     scrapy crawl msn -o 저장할 파일명 -t 저장포멧
 
+4. BeautifulSoup crawling
+   4-1. msn_BS 
+         |_msn_date_image.py (multiprocessing file)
+            <run code>
+            python3 msn_date_image.py --data=train or test
+   4-2.  msn_BS 
+         |_msn.py 
+            <run code>
+            python3 msn.py --data=train or test --save_format=csv or json
 ```
 
 

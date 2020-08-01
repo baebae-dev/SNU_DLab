@@ -8,7 +8,7 @@ class MsnLargeSpider(scrapy.Spider):
 
     def parse(self, response):
         titles = response.css('body>div>header>h1::text').get().strip()
-        dates = response.css('section.Modelinfo>div>div>div>span.date>time::text').get().strip()
+        dates = response.css('div.authorname-txt > span > time::attr("datetime")').get().strip()
         images = response.css('#main > article > section > ul > li:nth-child(1) > div > img::attr("src")').get()
         contents = ' '.join(response.css('#main > article > div.gallerydata > div.show > div.body-text > div > figure > figcaption > div > div > p::text').getall())
         
