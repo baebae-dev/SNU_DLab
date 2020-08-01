@@ -33,53 +33,56 @@ for url in urls:
     if num % 5000 == 0:
         print('{} urls are crawled.\n {} are remained'.format(num, total - num))
 
-    req = requests.get(url)
-    html = req.text
-    soup = BeautifulSoup(html, 'html.parser')
-
-    # url
-    url_lst.append(url)
-
-    # title
-    if soup.find('h1').text.strip() is not None:
-        title = soup.find('h1').text.strip()
-        titles.append(title)
-    elif soup.find('header').text.strip() is not None:
-        title = soup.find('header').text.strip()
-        titles.append(title)
-    else:
-        titles.append(None)
-
-    # date
     try:
-        date = soup.find('time').get('datetime')
-        dates.append(date)
+        req = requests.get(url)
+        html = req.text
+        soup = BeautifulSoup(html, 'html.parser')
+
+        # url
+        url_lst.append(url)
+
+        # title
+        if soup.find('h1').text.strip() is not None:
+            title = soup.find('h1').text.strip()
+            titles.append(title)
+        elif soup.find('header').text.strip() is not None:
+            title = soup.find('header').text.strip()
+            titles.append(title)
+        else:
+            titles.append(None)
+
+        # date
+        try:
+            date = soup.find('time').get('datetime')
+            dates.append(date)
+        except:
+            dates.append(url)
+
+        # content
+        if soup.find_all('p') is not None:
+            content = []
+            for el in soup.find_all('p'):
+                content.append(el.get_text()) 
+            contents.append(' '.join(content))
+        elif soup.find('h2').text.strip() is not None:
+            content = soup.find('h2').text.strip()
+            contents.append(content)
+        else:
+            contents.append(url)
+
+        # image
+        try:
+            image = soup.find('img').get('src')
+            images.append(image)
+        except:
+            images.append('no image')
+
+        # nid
+        nid = url.split('/')[-1].split('.')[0]
+        nids.append(nid)
+
     except:
-        dates.append(url)
-
-    # content
-    if soup.find_all('p') is not None:
-        content = []
-        for el in soup.find_all('p'):
-            content.append(el.get_text()) 
-        contents.append(' '.join(content))
-    elif soup.find('h2').text.strip() is not None:
-        content = soup.find('h2').text.strip()
-        contents.append(content)
-    else:
-        contents.append(url)
-
-    # image
-    try:
-        image = soup.find('img').get('src')
-        images.append(image)
-    except:
-        images.append('no image')
-
-    # nid
-    nid = url.split('/')[-1].split('.')[0]
-    nids.append(nid)
-
+        url_except.append(url)
 
 df = pd.DataFrame({'url' : url_lst,
                    'nids': nids,
@@ -92,5 +95,8 @@ df = pd.DataFrame({'url' : url_lst,
 print('-------df--------')
 print(df.shape)
 df.to_csv('msn_train.csv', index=False)
+
+print('-------url_except-----')
+print(len(url_except))
 
 print('-------Seconds: %s--------' % (time.time() - start_time))
