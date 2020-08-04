@@ -1,9 +1,7 @@
-Data/*.json
-Data/*.csv
-Data/*.zip
 Data/*
 Crawler/*.json
 .DS_Store
+msn_BS/msn/*.csv
 
 # Created by https://www.gitignore.io/api/jupyternotebooks
 # Edit at https://www.gitignore.io/?templates=jupyternotebooks
