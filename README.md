@@ -9,6 +9,8 @@
 | Task |  부연설명 | 파일  |
 |------|---------|------------------|
 | Data Crawler | 크롤러 생성 | [msn_crawler](SNU_Dlab/msn) |
+| Bert Embedding | 기사 내용 임베딩 | [Bert_Embedding](SNU_Dlab/Bert_Embedding) |
+
 
 ```
 * How To Use *
