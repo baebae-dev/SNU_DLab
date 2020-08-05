@@ -30,7 +30,7 @@ total = len(urls)
 for url in urls:
     # 진행상황 확인 
     num += 1
-    if num % 5000 == 0:
+    if num % 10000 == 0:
         print('{} urls are crawled.\n {} are remained'.format(num, total - num))
 
     try:
@@ -98,6 +98,10 @@ print(df.shape)
 df.to_csv('msn_dev.csv', index=False)
 
 print('-------url_except-----')
-print(len(url_except))
+print(len(url_except))  
+
+f = open('except_dev_url.txt', 'a')
+f.write('\n'.join(url_except))
+f.close()
 
 print('-------Seconds: %s--------' % (time.time() - start_time))
