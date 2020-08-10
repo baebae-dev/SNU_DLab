@@ -16,16 +16,16 @@
 * How To Use *
 
 BeautifulSoup crawling
-   msn_BS 
-      |_msn_train.py 
-         <run code>
-         python3 msn_train.py
-         python3 msn_dev.py 
+📦msn_BS 
+   |_msn_train.py 
+      <run code>
+      python3 msn_train.py
+      python3 msn_dev.py 
    
    예외처리된 데이터 별도로 data.ipynb 실행 후 추가 데이터 수집 완료
 
 최종 데이터와 합친 데이터 생성
-msn_BS
+📦msn_BS
    |_msn
       |_data.ipynb
  
