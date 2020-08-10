@@ -15,32 +15,20 @@
 ```
 * How To Use *
 
-1. msn_large(SNU_Dlab/msn_large)
-   : for large data set train & test
-   <run code>
-   scrapy crawl msn_large -o 저장할 파일명 -t 저장포멧
+BeautifulSoup crawling
+   msn_BS 
+      |_msn_train.py 
+         <run code>
+         python3 msn_train.py
+         python3 msn_dev.py 
+   
+   예외처리된 데이터 별도로 data.ipynb 실행 후 추가 데이터 수집 완료
 
-
-2. msn(SNU_Dlab/msn)
-   : for small data set train & test
-   <run code>
-   scrapy crawl msn -o 저장할 파일명 -t 저장포멧
-
-3. all using crawler(SNU_Dlab/Crawler)
-   : for large. small data train & test
-    estract features ['vert', 'subvert', 'nid', 'content', 'title', 'date;, 'image url']
-    <run code>
-    scrapy crawl msn -o 저장할 파일명 -t 저장포멧
-
-4. BeautifulSoup crawling
-   4-1. msn_BS 
-         |_msn_train.py 
-            <run code>
-            python3 msn_train.py
-   4-2.  msn_BS 
-         |_msn_dev.py 
-            <run code>
-            python3 msn_dev.py 
+최종 데이터와 합친 데이터 생성
+msn_BS
+   |_msn
+      |_data.ipynb
+ 
 ```
 
 
