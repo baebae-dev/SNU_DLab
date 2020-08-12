@@ -24,7 +24,7 @@ with open("not_tr.csv", "r") as file:
 # Don't open browser 
 options.add_argument("--headless")
 
-unparseable_urls = []
+unparseable_urls = [] 
 dates_lst = []
 urls_lst = []
 print('crawling start.')
