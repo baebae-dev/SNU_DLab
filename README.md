@@ -9,8 +9,12 @@
 | Task |  부연설명 | 파일  |
 |------|---------|------------------|
 | Data Crawler | 크롤러 생성 | [msn_crawler](SNU_Dlab/msn) |
+<<<<<<< HEAD
 | NAML | recsys modeling | [NAML](SNU_Dlab/NAML) |
 | NRMS | recsys modeling | [NRMS](SNU_Dlab/MIND2020) |
+=======
+| Modeling | recsys model | [Bert_Embedding](SNU_Dlab/Bert_Embedding) |
+>>>>>>> b1dc7b6485892d40f2f205d861527142efc1ccf7
 
 
 ```
