@@ -11,11 +11,13 @@
 | Data Crawler | 크롤러 생성 | [msn_crawler](SNU_Dlab/msn) |
 | NAML | recsys modeling | [NAML](SNU_Dlab/NAML) |
 | NRMS | recsys modeling | [NRMS](SNU_Dlab/MIND2020) |
-
+  
+  
 
 ```
 * How To Use *
 
+# crawling
 BeautifulSoup crawling
 📦msn_BS 
    |_msn_train.py 
@@ -29,6 +31,19 @@ BeautifulSoup crawling
 📦msn_BS
    |_msn
       |_data.ipynb
+      
+# Model
+NAML
+   |_ pip3 install -r requirements.txt
+      |_python3 src/data_preprocess.py
+         |_vim src/config.py
+            # model-specific chooshing and set params 
+            |_python3 src/train.py
+               # Train and save checkpoint into `checkpoint/{model_name}/` directory
+               |_python3 src/evaluate.py
+                  # Load latest checkpoint and evaluate on the test set
+                  # This will also generate prediction file `data/test/prediction.txt`
+
  
 ```
 
