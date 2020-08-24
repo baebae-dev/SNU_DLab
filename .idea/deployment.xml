@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="yuna@kahlo.snu.ac.kr:9999">
+    <serverData>
+      <paths name="yuna@kahlo.snu.ac.kr:9999">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/yuna/IJCAI2019-NAML" local="$PROJECT_DIR$/IJCAI2019-NAML" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="yuna@kahlo.snu.ac.kr:9999 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/yuna/test/mind2020" local="$PROJECT_DIR$/mind2020" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>
