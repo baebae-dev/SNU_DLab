@@ -19,7 +19,7 @@
 
 # crawling
 BeautifulSoup crawling
-📦msn_BS 
+📦 msn_BS 
    |_msn_train.py 
       <run code>
       python3 msn_train.py
@@ -28,21 +28,22 @@ BeautifulSoup crawling
    예외처리된 데이터 별도로 data.ipynb 실행 후 추가 데이터 수집 완료
 
 최종 데이터와 합친 데이터 생성
-📦msn_BS
+📦 msn_BS
    |_msn
       |_data.ipynb
       
 # Model
-NAML
+📦 NAML
    |_ pip3 install -r requirements.txt
-      |_python3 src/data_preprocess.py
-         |_vim src/config.py
-            # model-specific chooshing and set params 
-            |_python3 src/train.py
-               # Train and save checkpoint into `checkpoint/{model_name}/` directory
-               |_python3 src/evaluate.py
-                  # Load latest checkpoint and evaluate on the test set
-                  # This will also generate prediction file `data/test/prediction.txt`
+      📂|_ cd src
+        |_python3 data_preprocess.py
+           |_vim config.py
+              # model-specific chooshing and set params 
+           |_python3 train.py
+                 # Train and save checkpoint into `checkpoint/{model_name}/` directory
+           |_python3 evaluate.py
+                 # Load latest checkpoint and evaluate on the test set
+                 # This will also generate prediction file `data/test/prediction.txt`
 
  
 ```
