@@ -11,6 +11,8 @@
 | Data Crawler | 크롤러 생성 | [msn_crawler](SNU_Dlab/msn) |
 | NAML | recsys modeling | [NAML](SNU_Dlab/NAML) |
 | NRMS | recsys modeling | [NRMS](SNU_Dlab/MIND2020) |
+| TANR | recsys modeling | [TANR](SNU_Dlab/MIND2020) |
+| TANR_bert | recsys modeling | [TANR_bert](SNU_Dlab/MIND2020) |
   
   
 
