@@ -20,6 +20,12 @@ except (AttributeError, ModuleNotFoundError):
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
+def value2rank(d):
+    values = list(d.values())
+    ranks = [sorted(values, reverse=True).index(x) for x in values]
+    return {k: ranks[i] + 1 for i, k in enumerate(d.keys())}
+
+
 class NewsDataset(Dataset):
     """
     Load news for evaluation.

@@ -8,24 +8,18 @@ import numpy as np
 from config import model_name
 from tqdm import tqdm
 import os
-from pathlib import Path 
+from pathlib import Path
 from evaluate import evaluate
 import importlib
 import datetime
-import torch.nn as nn
 
-# import torch.nn as nn
- 
-# model, config load
 try:
     Model = getattr(importlib.import_module(f"model.{model_name}"), model_name)
     config = getattr(importlib.import_module('config'), f"{model_name}Config")
 except (AttributeError, ModuleNotFoundError):
     print(f"{model_name} not included!")
-    exit() 
+    exit()
 
-# device 
-# os.environ["CUDA_VISIBLE_DEVICES"] = '2' 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
@@ -63,10 +57,8 @@ def latest_checkpoint(directory):
         int(x.split('.')[-2].split('-')[-1]): x
         for x in os.listdir(directory)
     }
-
     if not all_checkpoints:
         return None
-
     return os.path.join(directory,
                         all_checkpoints[max(all_checkpoints.keys())])
 
@@ -74,11 +66,10 @@ def latest_checkpoint(directory):
 def train():
     writer = SummaryWriter(
         log_dir=
-        f"./runs/{model_name}/{datetime.datetime.now().replace(microsecond=0).isoformat()}{'-' + os.environ['REMARK'] if 'REMARK' in os.environ else ''}"
+        f"../runs/{model_name}/{datetime.datetime.now().replace(microsecond=0).isoformat()}{'-' + os.environ['REMARK'] if 'REMARK' in os.environ else ''}"
     )
 
     if not os.path.exists('checkpoint'):
-        print('makeidr checkpoint')
         os.makedirs('checkpoint')
 
     try:
@@ -87,15 +78,32 @@ def train():
     except FileNotFoundError:
         pretrained_word_embedding = None
 
-    # model 지정 
-    model = Model(config, pretrained_word_embedding, writer).to(device)
-    # model = nn.DataParallel(model, output_device=0) 
+
+    try:
+        pretrained_entity_embedding = torch.from_numpy(
+            np.load(
+                '../data/train/pretrained_entity_embedding.npy')).float()
+    except FileNotFoundError:
+        pretrained_entity_embedding = None
+
+    try:
+        pretrained_context_embedding = torch.from_numpy(
+            np.load(
+                '../data/train/pretrained_context_embedding.npy')).float()
+    except FileNotFoundError:
+        pretrained_context_embedding = None
+
+    model = Model(config, pretrained_word_embedding,
+                    pretrained_entity_embedding,
+                    pretrained_context_embedding, writer).to(device)
+
+
     print(model)
 
-    # data load
-    dataset = BaseDataset('../data/train/behaviors_parsed.tsv', 
+    dataset = BaseDataset('../data/train/behaviors_parsed.tsv',
                           '../data/train/news_parsed.tsv',
                           config.dataset_attributes)
+
     print(f"Load training dataset with size {len(dataset)}.")
 
     dataloader = iter(
@@ -112,18 +120,14 @@ def train():
     step = 0
     early_stopping = EarlyStopping()
 
-    checkpoint_dir = os.path.join('../checkpoint', model_name, 'batch_size'+str(config.batch_size)+'_num'+str(config.num_clicked_news_a_user)) 
-    print(f'checkpoint_dir : {checkpoint_dir}')
+    checkpoint_dir = os.path.join('../checkpoint', model_name)
     Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
 
-
     checkpoint_path = latest_checkpoint(checkpoint_dir)
-    print(f'checkpoint_path : {checkpoint_path}')
     if checkpoint_path is not None:
         print(f"Load saved parameters in {checkpoint_path}")
         checkpoint = torch.load(checkpoint_path)
-        model = nn.DataParallel(model)
-        model.load_state_dict(checkpoint['model_state_dict'], strict=False)
+        model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         step = checkpoint['step']
         early_stopping(checkpoint['early_stop_value'])
@@ -146,24 +150,12 @@ def train():
                                drop_last=True))
                 minibatch = next(dataloader)
 
-            step += 1 
-            # loss 
-            # TopicClassificationLoss 훈련 동시 
-            y_pred, topic_classification_loss = model(
-                minibatch["candidate_news"], minibatch["clicked_news"])
-        
+            step += 1
+            y_pred = model(minibatch["candidate_news"],
+                               minibatch["clicked_news"])
+
             loss = torch.stack([x[0] for x in -F.log_softmax(y_pred, dim=1)
                                 ]).mean()
-  
-            if i % 10 == 0:
-                writer.add_scalar('Train/BaseLoss', loss.item(), step)
-                writer.add_scalar('Train/TopicClassificationLoss',
-                                    topic_classification_loss.item(), step)
-                writer.add_scalar(
-                    'Train/TopicBaseRatio',
-                    topic_classification_loss.item() / loss.item(), step)
-            
-            loss += config.topic_classification_loss_weight * topic_classification_loss
             loss_full.append(loss.item())
             optimizer.zero_grad()
             loss.backward()
@@ -179,7 +171,7 @@ def train():
 
             if i % config.num_batches_validate == 0:
                 val_auc, val_mrr, val_ndcg5, val_ndcg10 = evaluate(
-                    model, '../data/val')
+                    model, './data/val')
                 writer.add_scalar('Validation/AUC', val_auc, step)
                 writer.add_scalar('Validation/MRR', val_mrr, step)
                 writer.add_scalar('Validation/nDCG@5', val_ndcg5, step)
@@ -191,8 +183,7 @@ def train():
                 early_stop, get_better = early_stopping(-val_auc)
                 if early_stop:
                     tqdm.write('Early stop.')
-                    break 
-
+                    break
                 elif get_better:
                     torch.save(
                         {
@@ -200,8 +191,7 @@ def train():
                             'optimizer_state_dict': optimizer.state_dict(),
                             'step': step,
                             'early_stop_value': -val_auc
-                        }, f"../checkpoint/{model_name}/batch_size{config.batch_size}_num{config.num_clicked_news_a_user}/ckpt{config.batch_size}-{step}.pth")
-                    print(f" torch save at ../checkpoint/{model_name}/{config.batch_size}/batch_size{config.batch_size}_num{config.num_clicked_news_a_user}/ckpt{config.batch_size}-{step}.pth")
+                        }, f"../checkpoint/{model_name}/ckpt-{step}.pth")
 
             pbar.update(1)
 

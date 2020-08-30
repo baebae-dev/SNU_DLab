@@ -138,10 +138,7 @@ def evaluate(model, directory, generate_txt=False, txt_path=None):
         generate_txt: whether to generate txt file from inference result
         txt_path: file path
     Returns:
-        AUC
-        nMRR
-        nDCG@5
-        nDCG@10
+        output.txt
     """
     news_dataset = NewsDataset(os.path.join(directory, 'news_parsed.tsv'))
     # trn_sampler = DistributedSampler(news_dataset)

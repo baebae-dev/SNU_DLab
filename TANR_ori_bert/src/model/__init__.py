@@ -15,10 +15,9 @@ class TANR(torch.nn.Module):
     def __init__(self, config, pretrained_word_embedding=None, writer=None):
         super(TANR, self).__init__()
         self.config = config
-        self.news_encoder = NewsEncoder(config, pretrained_word_embedding, writer)
+        self.news_encoder = NewsEncoder(config, pretrained_word_embedding)
         self.user_encoder = UserEncoder(config)
         self.click_predictor = DotProductClickPredictor()
-        # topic_predictor 
         self.topic_predictor = nn.Linear(config.num_filters,
                                          config.num_categories)
 
@@ -59,7 +58,7 @@ class TANR(torch.nn.Module):
 
         # batch_size * (1 + K + num_clicked_news_a_user), num_categories
         y_pred = self.topic_predictor(
-            torch.cat( 
+            torch.cat(
                 (candidate_news_vector.transpose(0, 1), clicked_news_vector),
                 dim=1).view(-1, self.config.num_filters))
         # batch_size * (1 + K + num_clicked_news_a_user)
@@ -74,7 +73,7 @@ class TANR(torch.nn.Module):
 
     def get_news_vector(self, news):
         """
-        Args:   
+        Args:
             news:
                 {
                     "title": Tensor(batch_size) * num_words_title

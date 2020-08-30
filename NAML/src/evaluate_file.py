@@ -20,6 +20,13 @@ except (AttributeError, ModuleNotFoundError):
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
+def value2rank(d):
+    values = list(d.values())
+    ranks = [sorted(values, reverse=True).index(x) for x in values]
+    return {k: ranks[i] + 1 for i, k in enumerate(d.keys())}
+
+
+
 class NewsDataset(Dataset):
     """
     Load news for evaluation.
@@ -138,10 +145,7 @@ def evaluate(model, directory, generate_txt=False, txt_path=None):
         generate_txt: whether to generate txt file from inference result
         txt_path: file path
     Returns:
-        AUC
-        nMRR
-        nDCG@5
-        nDCG@10
+        outputfile.txt
     """
     news_dataset = NewsDataset(os.path.join(directory, 'news_parsed.tsv'))
     # trn_sampler = DistributedSampler(news_dataset)
@@ -255,10 +259,11 @@ if __name__ == '__main__':
 
     evaluate(model, '../data/real_test', True, '../data/real_test/prediction.txt')
 
-    print('zippppp')
-    f = zipfile.ZipFile('../data/real_test/prediction.zip', 'w', zipfile.ZIP_DEFLATED)
+
+    f = zipfile.ZipFile('../data/real_test/prediction.txt', 'w', zipfile.ZIP_DEFLATED)
+    print('zip the file', '../data/real_test/prediction.txt')
     f.write('../data/real_test/prediction.txt', arcname='prediction.txt')
     f.close()
 
-    print('zippped file ', '../data/real_test/prediction.zip') 
+    print('zippped file ', '../data/real_test/prediction.zip')
 

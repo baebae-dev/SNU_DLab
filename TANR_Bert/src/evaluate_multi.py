@@ -272,7 +272,7 @@ def evaluate(model, directory, generate_txt=False, txt_path=None):
 
     return np.mean(aucs), np.mean(mrrs), np.mean(ndcg5s), np.mean(ndcg10s)
 
-
+ x
 if __name__ == '__main__':
     print('Using device:', device)
     print(f'Evaluating model {model_name}')

@@ -8,9 +8,8 @@ import os
 import pandas as pd
 from ast import literal_eval
 import importlib
-import zipfile
 
-try: 
+try:
     Model = getattr(importlib.import_module(f"model.{model_name}"), model_name)
     config = getattr(importlib.import_module('config'), f"{model_name}Config")
 except (AttributeError, ModuleNotFoundError):
@@ -18,6 +17,33 @@ except (AttributeError, ModuleNotFoundError):
     exit()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+def dcg_score(y_true, y_score, k=10):
+    order = np.argsort(y_score)[::-1]
+    y_true = np.take(y_true, order[:k])
+    gains = 2**y_true - 1
+    discounts = np.log2(np.arange(len(y_true)) + 2)
+    return np.sum(gains / discounts)
+
+
+def ndcg_score(y_true, y_score, k=10):
+    best = dcg_score(y_true, y_true, k)
+    actual = dcg_score(y_true, y_score, k)
+    return actual / best
+
+
+def mrr_score(y_true, y_score):
+    order = np.argsort(y_score)[::-1]
+    y_true = np.take(y_true, order)
+    rr_score = y_true / (np.arange(len(y_true)) + 1)
+    return np.sum(rr_score) / np.sum(y_true)
+
+
+def value2rank(d):
+    values = list(d.values())
+    ranks = [sorted(values, reverse=True).index(x) for x in values]
+    return {k: ranks[i] + 1 for i, k in enumerate(d.keys())}
 
 
 class NewsDataset(Dataset):
@@ -73,7 +99,8 @@ class UserDataset(Dataset):
             else:
                 user_missed += 1
                 self.behaviors.at[row.Index, 'user'] = 0
-
+        if model_name == 'LSTUR':
+            print(f'User miss rate: {user_missed/user_total:.4f}')
 
     def __len__(self):
         return len(self.behaviors)
@@ -144,12 +171,11 @@ def evaluate(model, directory, generate_txt=False, txt_path=None):
         nDCG@10
     """
     news_dataset = NewsDataset(os.path.join(directory, 'news_parsed.tsv'))
-    # trn_sampler = DistributedSampler(news_dataset)
-    news_dataloader = DataLoader(news_dataset, 
+    news_dataloader = DataLoader(news_dataset,
                                  batch_size=config.batch_size,
                                  shuffle=False,
                                  num_workers=config.num_workers,
-                                 drop_last=False) #, sampler=trn_sampler)
+                                 drop_last=False)
 
     news2vector = {}
     with tqdm(total=len(news_dataloader),
@@ -181,15 +207,18 @@ def evaluate(model, directory, generate_txt=False, txt_path=None):
             user_strings = minibatch["clicked_news_string"]
             if any(user_string not in user2vector
                    for user_string in user_strings):
-                try:
-                    clicked_news_vector = torch.stack([
-                        torch.stack([news2vector[x].to(device) for x in news_list],
-                                    dim=0)
-                        for news_list in minibatch["clicked_news"]
-                    ], dim=0).transpose(0, 1)
-                except:
-                    pass
-                user_vector = model.get_user_vector(clicked_news_vector)
+                clicked_news_vector = torch.stack([
+                    torch.stack([news2vector[x].to(device) for x in news_list],
+                                dim=0)
+                    for news_list in minibatch["clicked_news"]
+                ],
+                                                  dim=0).transpose(0, 1)
+                if model_name == 'LSTUR':
+                    user_vector = model.get_user_vector(
+                        minibatch['user'], minibatch['clicked_news_length'],
+                        clicked_news_vector)
+                else:
+                    user_vector = model.get_user_vector(clicked_news_vector)
                 for user, vector in zip(user_strings, user_vector):
                     if user not in user2vector:
                         user2vector[user] = vector
@@ -202,26 +231,37 @@ def evaluate(model, directory, generate_txt=False, txt_path=None):
                                       shuffle=False,
                                       num_workers=config.num_workers)
 
-
-    # 제출 파일 생성
+    aucs = []
+    mrrs = []
+    ndcg5s = []
+    ndcg10s = []
     if generate_txt:
         answer_file = open(txt_path, 'w')
-
     with tqdm(total=len(behaviors_dataloader),
               desc="Calculating probabilities") as pbar:
         for minibatch in behaviors_dataloader:
-            try:
-                impression = {
-                    news[0].split('-')[0]: model.get_prediction(
-                        news2vector[news[0].split('-')[0]],
-                        user2vector[minibatch['clicked_news_string'][0]]).item()
-                    for news in minibatch['impressions']
-                }
-            except:
-                pass
+            impression = {
+                news[0].split('-')[0]: model.get_prediction(
+                    news2vector[news[0].split('-')[0]],
+                    user2vector[minibatch['clicked_news_string'][0]]).item()
+                for news in minibatch['impressions']
+            }
 
+            y_pred_list = list(impression.values())
+            y_list = [
+                int(news[0].split('-')[1]) for news in minibatch['impressions']
+            ]
 
-            # 제출 파일 작성
+            auc = roc_auc_score(y_list, y_pred_list)
+            mrr = mrr_score(y_list, y_pred_list)
+            ndcg5 = ndcg_score(y_list, y_pred_list, 5)
+            ndcg10 = ndcg_score(y_list, y_pred_list, 10)
+
+            aucs.append(auc)
+            mrrs.append(mrr)
+            ndcg5s.append(ndcg5)
+            ndcg10s.append(ndcg10)
+
             if generate_txt:
                 answer_file.write(
                     f"{minibatch['impression_id'][0]} {str(list(value2rank(impression).values())).replace(' ','')}\n"
@@ -230,35 +270,28 @@ def evaluate(model, directory, generate_txt=False, txt_path=None):
 
     if generate_txt:
         answer_file.close()
-    print(f'saved {txt_path}')
-    return
+
+    return np.mean(aucs), np.mean(mrrs), np.mean(ndcg5s), np.mean(ndcg10s)
 
 
 if __name__ == '__main__':
     print('Using device:', device)
     print(f'Evaluating model {model_name}')
-
     # Don't need to load pretrained word/entity/context embedding
     # since it will be loaded from checkpoint later
     model = Model(config).to(device)
     from train import latest_checkpoint  # Avoid circular imports
-    checkpoint_dir = os.path.join('../checkpoint', model_name, 'batch_size'+str(config.batch_size)+'_num'+str(config.num_clicked_news_a_user)) 
-    checkpoint_path = latest_checkpoint(checkpoint_dir)
+    checkpoint_path = latest_checkpoint(
+        os.path.join('../checkpoint', model_name))
     if checkpoint_path is None:
         print('No checkpoint file found!')
         exit()
     print(f"Load saved parameters in {checkpoint_path}")
-
     checkpoint = torch.load(checkpoint_path)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
-
-    evaluate(model, '../data/real_test', True, '../data/real_test/prediction.txt')
-
-    print('zippppp')
-    f = zipfile.ZipFile('../data/real_test/prediction.zip', 'w', zipfile.ZIP_DEFLATED)
-    f.write('../data/real_test/prediction.txt', arcname='prediction.txt')
-    f.close()
-
-    print('zippped file ', '../data/real_test/prediction.zip') 
-
+    auc, mrr, ndcg5, ndcg10 = evaluate(model, '../data/test', True,
+                                       '../data/test/prediction.txt')
+    print(
+        f'AUC: {auc:.4f}\nMRR: {mrr:.4f}\nnDCG@5: {ndcg5:.4f}\nnDCG@10: {ndcg10:.4f}'
+    )

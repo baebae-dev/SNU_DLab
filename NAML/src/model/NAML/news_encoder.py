@@ -17,55 +17,65 @@ class NewsEncoder(torch.nn.Module):
         else:
             self.word_embedding = nn.Embedding.from_pretrained(
                 pretrained_word_embedding, freeze=False, padding_idx=0)
-        
-        # category
         self.category_embedding = nn.Embedding(config.num_categories,
                                                config.category_embedding_dim,
                                                padding_idx=0)
         self.category_linear = nn.Linear(config.category_embedding_dim,
                                          config.num_filters)
-        # subcategory
         self.subcategory_linear = nn.Linear(config.category_embedding_dim,
                                             config.num_filters)
         assert config.window_size >= 1 and config.window_size % 2 == 1
-        # title 
         self.title_CNN = nn.Conv2d(
+            1,
+            config.num_filters,
+            (config.window_size, config.word_embedding_dim),
+            padding=(int((config.window_size - 1) / 2), 0))
+        self.abstract_CNN = nn.Conv2d(
             1,
             config.num_filters,
             (config.window_size, config.word_embedding_dim),
             padding=(int((config.window_size - 1) / 2), 0))
         self.title_attention = AdditiveAttention(config.query_vector_dim,
                                                  config.num_filters)
-        # abstract
-        self.abstract_CNN = nn.Conv2d(
-            1,
-            config.num_filters,
-            (config.window_size, config.word_embedding_dim),
-            padding=(int((config.window_size - 1) / 2), 0)) 
         self.abstract_attention = AdditiveAttention(config.query_vector_dim,
-                                                    config.num_filters) 
-
-        # final_att
+                                                    config.num_filters)
         self.final_attention = AdditiveAttention(config.query_vector_dim,
                                                  config.num_filters, writer,
                                                  'Train/NewsAttentionWeight',
                                                  ['category', 'subcategory',
                                                   'title', 'abstract'])
 
-
-
     def forward(self, news):
         """
         Args:
             news:
                 {
-                    "title": Tensor(batch_size) * num_words_title
+                    "category": Tensor(batch_size),
+                    "subcategory": Tensor(batch_size),
+                    "title": Tensor(batch_size) * num_words_title,
+                    "abstract": Tensor(batch_size) * num_words_abstract
                 }
         Returns:
             (shape) batch_size, num_filters
         """
-               
-        ## Part 1: calculate weighted_title_vector
+        # Part 1: calculate activated_category_vector
+
+        # batch_size, category_embedding_dim
+        category_vector = self.category_embedding(news['category'].to(device))
+        # batch_size, num_filters
+        activated_category_vector = F.relu(
+            self.category_linear(category_vector))
+
+        # Part 2: calculate activated_subcategory_vector
+
+        # batch_size, category_embedding_dim
+        subcategory_vector = self.category_embedding(
+            news['subcategory'].to(device))
+        # batch_size, num_filters
+        activated_subcategory_vector = F.relu(
+            self.subcategory_linear(subcategory_vector))
+
+        # Part 3: calculate weighted_title_vector
 
         # batch_size, num_words_title, word_embedding_dim
         title_vector = F.dropout(self.word_embedding(
@@ -83,24 +93,7 @@ class NewsEncoder(torch.nn.Module):
         weighted_title_vector = self.title_attention(
             activated_title_vector.transpose(1, 2))
 
-        ## Part 2: calculate activated_category_vector
-
-        # batch_size, category_embedding_dim
-        category_vector = self.category_embedding(news['category'].to(device))
-        # batch_size, num_filters
-        activated_category_vector = F.relu(
-            self.category_linear(category_vector))
-
-        ## Part 3: calculate activated_subcategory_vector
-
-        # batch_size, category_embedding_dim
-        subcategory_vector = self.category_embedding(
-            news['subcategory'].to(device))
-        # batch_size, num_filters
-        activated_subcategory_vector = F.relu(
-            self.subcategory_linear(subcategory_vector))
-
-        ## Part 4: calculate weighted_abstract_vector
+        # Part 4: calculate weighted_abstract_vector
 
         # batch_size, num_words_abstract, word_embedding_dim
         abstract_vector = F.dropout(self.word_embedding(
@@ -118,13 +111,13 @@ class NewsEncoder(torch.nn.Module):
         # batch_size, num_filters
         weighted_abstract_vector = self.abstract_attention(
             activated_abstract_vector.transpose(1, 2))
+
         # batch_size, 4, num_filters
         stacked_news_vector = torch.stack([
             activated_category_vector, activated_subcategory_vector,
             weighted_title_vector, weighted_abstract_vector
-        ], dim=1)
-
-        ## Part 5: news_vector
+        ],
+            dim=1)
         # batch_size, num_filters
         news_vector = self.final_attention(stacked_news_vector)
-        return news_vector 
+        return news_vector
