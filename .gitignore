@@ -5,6 +5,10 @@ msn_BS/msn/*.csv
 DKN/data/*
 NAML/data/*
 crawler_check/*
+TANR/data/*
+TANR_multi/data/*
+TANR_Bert/data/*
+
 
 # Created by https://www.gitignore.io/api/jupyternotebooks
 # Edit at https://www.gitignore.io/?templates=jupyternotebooks
